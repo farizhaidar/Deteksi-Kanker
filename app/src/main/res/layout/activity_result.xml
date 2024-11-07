@@ -38,8 +38,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="352dp"
                     android:layout_marginBottom="16dp"
-                    android:background="@drawable/image_border"
-                    android:scaleType="centerCrop"
                     app:srcCompat="@drawable/ic_place_holder" />
 
                 <TextView

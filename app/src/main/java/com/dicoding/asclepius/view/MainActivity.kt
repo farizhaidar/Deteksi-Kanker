@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity(), ImageClassifierHelper.ClassifierListen
 
     private lateinit var binding: ActivityMainBinding
     private var currentImageUri: Uri? = null
+    var tempImageUri: Uri? = null
     private lateinit var imageClassifierHelper: ImageClassifierHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,17 +61,18 @@ class MainActivity : AppCompatActivity(), ImageClassifierHelper.ClassifierListen
         launcherGallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
-    // Launch gallery to pick an image
+
     private val launcherGallery = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
-            currentImageUri = uri
+            tempImageUri = uri
             showCropOptions(uri)
         } else {
             Log.d("Photo Picker", "No media selected")
         }
     }
+
 
     private fun showCropOptions(sourceUri: Uri) {
         val aspectRatios = listOf(
@@ -91,6 +93,7 @@ class MainActivity : AppCompatActivity(), ImageClassifierHelper.ClassifierListen
         builder.show()
     }
 
+
     private fun startCropWithAspectRatio(sourceUri: Uri, aspectX: Float, aspectY: Float) {
         val destinationUri = Uri.fromFile(createImageFile())
         UCrop.of(sourceUri, destinationUri)
@@ -99,13 +102,15 @@ class MainActivity : AppCompatActivity(), ImageClassifierHelper.ClassifierListen
             .start(this)
     }
 
+
     private fun createImageFile(): File {
         val imageFile = File(cacheDir, "cropped_image_${System.currentTimeMillis()}.jpg")
         imageFile.createNewFile()
         return imageFile
     }
 
-    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
+
+    @Deprecated("This method has been deprecated in favor of using the Activity Result API")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -119,16 +124,10 @@ class MainActivity : AppCompatActivity(), ImageClassifierHelper.ClassifierListen
                     showToast("Error: Cropped image URI is null")
                 }
             } ?: showToast("Error: Data intent is null")
-        } else if (resultCode == UCrop.RESULT_ERROR) {
-            data?.let {
-                val cropError = UCrop.getError(it)
-                if (cropError != null) {
-                    showToast("Crop error: ${cropError.message}")
-                    Log.e("MainActivity", "Crop error: ${cropError.message}")
-                } else {
-                    showToast("Unknown crop error occurred")
-                }
-            } ?: showToast("Error: Data intent is null")
+        } else if (resultCode != RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
+            showToast("Cropping cancelled or failed")
+            Log.d("MainActivity", "Cropping cancelled, using previous image")
+
         }
     }
 
